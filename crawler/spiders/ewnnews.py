@@ -39,7 +39,7 @@ class NewsItemExtractorMixin(object):
 
 class EWNEnglishNewsSpider(CrawlSpider, NewsItemExtractorMixin):
 
-    name = 'ewn-english'
+    name = 'ewnnews-english'
     allowed_domains = ['www.oikoumene.org']
     start_urls = [
         'http://www.oikoumene.org/en/activities/ewn-home/resources-and-links/news.html'
