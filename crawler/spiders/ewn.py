@@ -2,6 +2,8 @@ from scrapy.item import Item, Field
 from scrapy.contrib.spiders.crawl import CrawlSpider, Rule
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from pyquery import PyQuery
+import urllib
+from base64 import b64encode
 
 class NewsItem(Item):
     name = Field()
@@ -20,9 +22,13 @@ class NewsItemExtractorMixin(object):
         item = NewsItem()
         item['title'] = q('#news h1').text()
         item['effectiveDate'] = q('#news .date').text()
-        image_url = q('#news .img a').attr('href')
-        if image_url:
-            item['image'] = 'http://www.oikoumene.org/%s' % image_url
+        image_loader_url = q('#news .img a').attr('href')
+        if image_loader_url:
+            qi = PyQuery(urllib.urlopen(
+                'http://www.oikoumene.org/%s' % image_loader_url).read())
+            image_url = qi('img').attr('src')
+            item['image'] = b64encode(urllib.urlopen(
+                'http://www.oikoumene.org/%s' % image_url).read())
             item['imageCaption'] = q('#news .img .caption').text()
         bodytext = q('#news .news-content')
         bodytext.remove('.news_footer')
