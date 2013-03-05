@@ -33,13 +33,17 @@ class NewsItemExtractorMixin(object):
         bodytext = q('#news .news-content')
         bodytext.remove('.news_footer')
         bodytext.remove('.more_link')
-        item['bodytext'] = bodytext.html()
+
+        # cleanup html and set bodytext
+        bodytext.find("*[class]").each(lambda x: PyQuery(this).attr('class',''))
+        item['bodytext'] = bodytext.html().replace(u'<p>\xa0</p>',u'')
+        item['description'] = bodytext.find('b:first').text()
         item['orig_url'] = response.url
         return item
 
 class EWNEnglishNewsSpider(CrawlSpider, NewsItemExtractorMixin):
 
-    name = 'ewnnews-english'
+    name = 'ewnnews-en'
     allowed_domains = ['www.oikoumene.org']
     start_urls = [
         'http://www.oikoumene.org/en/activities/ewn-home/resources-and-links/news.html'

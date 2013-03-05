@@ -21,7 +21,9 @@ class GalleryExtractorMixin(object):
         q = PyQuery(response.body)
         item = GalleryItem()
         item['title'] = q('.csc-header.csc-header-n1 b').text()
-        item['bodytext'] = q('.csc-text').html()
+        bodytext = q('.csc-text')
+        bodytext.find('*[class]').each(lambda x: PyQuery(this).attr('class',''))
+        item['bodytext'] = bodytext.html()
         images = []
         q('.myGallery .imageElement').each(
             lambda x: self.parse_image(this, images)
@@ -60,7 +62,7 @@ class GalleryExtractorMixin(object):
 
 class EWNEnglishGallerySpider(CrawlSpider, GalleryExtractorMixin):
 
-    name = 'ewngallery-english'
+    name = 'ewngallery-en'
     allowed_domains = ['www.oikoumene.org']
     start_urls = [
             'http://www.oikoumene.org/en/activities/ewn-home/resources-and-links/ewn-picture-gallery.html'
