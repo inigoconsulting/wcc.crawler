@@ -14,6 +14,7 @@ class NewsItem(Item):
     imageCaption = Field()
     effectiveDate = Field()
     orig_url = Field()
+    lang_urls = Field()
 
 class NewsItemExtractorMixin(object):
 
@@ -39,6 +40,14 @@ class NewsItemExtractorMixin(object):
         item['bodytext'] = bodytext.html().replace(u'<p>\xa0</p>',u'')
         item['description'] = bodytext.find('b:first').text()
         item['orig_url'] = response.url
+        item['lang_urls'] = {}
+
+        def _extract_langurl(x):
+            ql = PyQuery(this)
+            lang = ql.attr('lang')
+            item['lang_urls'][lang] = ql.attr('href')
+
+        q('#languages a.lang').each(_extract_langurl)
         return item
 
 class EWNEnglishNewsSpider(CrawlSpider, NewsItemExtractorMixin):
@@ -53,4 +62,50 @@ class EWNEnglishNewsSpider(CrawlSpider, NewsItemExtractorMixin):
         Rule(SgmlLinkExtractor(allow=(
             '^.*?/activities/ewn-home/ewn-news-and-events-containers/.*?html',
         )), callback='parse_newsitem', follow=False),
+    )
+
+class EWNDeutschNewsSpider(CrawlSpider, NewsItemExtractorMixin):
+
+    name = 'ewnnews-de'
+    allowed_domains = ['www.oikoumene.org']
+
+    start_urls = [
+        'http://www.oikoumene.org/de/activities/oekumenisches-wassernetzwerk-oewn/ressourcen-und-links/nachrichten.html'
+    ]
+
+    rules = (
+        Rule(SgmlLinkExtractor(
+            allow='^.*?/activities/oekumenisches-wassernetzwerk-oewn/ressourcen-und-links/nachrichten/.*')),
+        Rule(SgmlLinkExtractor(
+            allow='^.*?/oekumenisches-wassernetzwerk-oewn/ewn-news-and-events-containers/.*?html'),
+            callback='parse_newsitem', follow=False)
+    )
+
+class EWNFrancaisNewsSpider(CrawlSpider, NewsItemExtractorMixin):
+    name = 'ewnnews-fr'
+    allowed_domains = ['www.oikoumene.org']
+    start_urls = [
+        'http://www.oikoumene.org/fr/activities/roe/ressources-et-liens/nouvelles.html'
+    ]
+
+    rules = (
+        Rule(SgmlLinkExtractor(
+        allow='^.*?/activities/roe/ressources-et-liens/nouvelles/.*')),
+        Rule(SgmlLinkExtractor(
+            allow='^.*?/activities/roe/ewn-news-and-events-containers/.*?html'),
+            callback='parse_newsitem', follow=False)
+    )
+
+class EWNEspanolNewsSpider(CrawlSpider, NewsItemExtractorMixin):
+    name = 'ewnnews-es'
+    start_urls = [
+        'http://www.oikoumene.org/es/activities/la-reda/recursos-y-enlaces/novedades.html'
+    ]
+
+    rules = (
+        Rule(SgmlLinkExtractor(
+            allow='^.*?/activities/la-reda/recursos-y-enlaces/novedades/.*')),
+        Rule(SgmlLinkExtractor(
+            allow='^.*?/activities/la-reda/ewn-news-and-events-containers/.*html'),
+            callback='parse_newsitem', follow=False)
     )

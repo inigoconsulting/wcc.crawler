@@ -33,6 +33,13 @@ class GalleryExtractorMixin(object):
             lambda x: self.parse_textpic_image(this, images)
         )
 
+        def _extract_langurl(x):
+            ql = PyQuery(this)
+            lang = ql.attr('lang')
+            item['lang_urls'][lang] = ql.attr('href')
+
+        q('#languages a.lang').each(_extract_langurl)
+
         item['images'] = images
         return item
 
