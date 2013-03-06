@@ -10,6 +10,7 @@ class GalleryItem(Item):
     description = Field()
     bodytext = Field()
     images = Field()
+    lang_urls = Field()
 
 class ImageItem(Item):
     caption = Field()
@@ -33,10 +34,12 @@ class GalleryExtractorMixin(object):
             lambda x: self.parse_textpic_image(this, images)
         )
 
+        item['lang_urls'] = {}
+
         def _extract_langurl(x):
             ql = PyQuery(this)
             lang = ql.attr('lang')
-            item['lang_urls'][lang] = ql.attr('href')
+            item['lang_urls'][lang] = 'http://www.oikoumene.org/%s' % ql.attr('href')
 
         q('#languages a.lang').each(_extract_langurl)
 
@@ -77,4 +80,44 @@ class EWNEnglishGallerySpider(CrawlSpider, GalleryExtractorMixin):
     rules = (
             Rule(SgmlLinkExtractor(allow='^.*?/activities/ewn-home/resources-and-links/ewn-picture-gallery/.*\.html'),
                 callback='parse_gallery', follow=False),
+    )
+
+class EWNDeutschGallerySpider(CrawlSpider, GalleryExtractorMixin):
+
+    name = 'ewngallery-de'
+    allowed_domains = ['www.oikoumene.org']
+    start_urls = [
+        'http://www.oikoumene.org/de/activities/oekumenisches-wassernetzwerk-oewn/ressourcen-und-links/die-bildergalerie-des-oewn.html'
+    ]
+
+    rules = (
+        Rule(SgmlLinkExtractor(
+            allow='^.*/activities/oekumenisches-wassernetzwerk-oewn/ressourcen-und-links/die-bildergalerie-des-oewn/.*\.html'
+        ), callback='parse_gallery', follow=False),
+    )
+
+class EWNFrancaisGallerySpider(CrawlSpider, GalleryExtractorMixin):
+    name = 'ewngallery-fr'
+    allowed_domains = ['www.oikoumene.org']
+    start_urls = [
+        'http://www.oikoumene.org/fr/activities/roe/ressources-et-liens/roe-galerie-de-photos.html'
+    ]
+
+    rules = (
+        Rule(SgmlLinkExtractor(
+            allow='^.*/activities/roe/ressources-et-liens/roe-galerie-de-photos/.*\.html'),
+            callback='parse_gallery', follow=False),
+    )
+
+class EWNEspanolGallerySpider(CrawlSpider, GalleryExtractorMixin):
+    name = 'ewngallery-es'
+    allowed_domains = ['www.oikoumene.org']
+    start_urls = [
+        'http://www.oikoumene.org/es/activities/la-reda/recursos-y-enlaces/reda-galeria-de-fotos.html'
+    ]
+
+    rules = (
+        Rule(SgmlLinkExtractor(
+            allow='http://www.oikoumene.org/es/activities/la-reda/recursos-y-enlaces/reda-galeria-de-fotos/.*\.html'),
+            callback='parse_gallery', follow=False),
     )

@@ -45,7 +45,7 @@ class NewsItemExtractorMixin(object):
         def _extract_langurl(x):
             ql = PyQuery(this)
             lang = ql.attr('lang')
-            item['lang_urls'][lang] = ql.attr('href')
+            item['lang_urls'][lang] = 'http://www.oikoumene.org/%s' % ql.attr('href')
 
         q('#languages a.lang').each(_extract_langurl)
         return item

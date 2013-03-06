@@ -1,6 +1,10 @@
 BUILDOUTROOT=`pwd`
 SCRAPY=$BUILDOUTROOT/bin/scrapy
-CRAWLERS="ewnnews-en ewnnews-de ewnnews-fr ewnnews-es"
+CRAWLERS="
+ewnnews-en ewnnews-de ewnnews-fr 
+ewnnews-es ewngallery-en ewngallery-de 
+ewngallery-fr ewngallery-es
+"
 
 for CRAWLER in $CRAWLERS;do
     cd $BUILDOUTROOT;
