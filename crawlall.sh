@@ -1,10 +1,14 @@
 BUILDOUTROOT=`pwd`
 SCRAPY=$BUILDOUTROOT/bin/scrapy
-CRAWLERS="
-ewnnews-en ewnnews-de ewnnews-fr 
-ewnnews-es ewngallery-en ewngallery-de 
-ewngallery-fr ewngallery-es
-"
+MODULES="ewnsevenweekwater"
+LANGS="en de fr es"
+CRAWLERS=""
+for MOD in $MODULES;do
+    for LANG in $LANGS;do
+        CRAWLERS="$CRAWLERS $MOD-$LANG"
+    done;
+done;
+
 
 for CRAWLER in $CRAWLERS;do
     cd $BUILDOUTROOT;
