@@ -9,6 +9,7 @@ import re
 import os
 
 class NewsletterItem(Item):
+    name = Field()
     title = Field()
     raw_html = Field()
     orig_url = Field()
@@ -21,7 +22,8 @@ class NewsletterItemExtractorMixin(object):
         q = PyQuery(response.body)
 
         item = NewsletterItem()
-        item['title'] = os.path.basename(response.url).replace('.html','')
+        item['name'] = os.path.basename(response.url).replace('.html','')
+        item['title'] = q('title').text()
         item['raw_html'] = response.body
         item['orig_url'] = response.url
         item['type_tag'] = 'newsletter'
