@@ -14,6 +14,7 @@ class NewsItem(Item):
     imageCaption = Field()
     effectiveDate = Field()
     orig_url = Field()
+    id_url = Field()
     lang_urls = Field()
 
 class NewsItemExtractorMixin(object):
@@ -48,6 +49,8 @@ class NewsItemExtractorMixin(object):
             item['lang_urls'][lang] = 'http://www.oikoumene.org/%s' % ql.attr('href')
 
         q('#languages a.lang').each(_extract_langurl)
+
+        item['id_url'] = q('#footer a[rel="nofollow"]').attr('href')
         return item
 
 class EWNEnglishNewsSpider(CrawlSpider, NewsItemExtractorMixin):

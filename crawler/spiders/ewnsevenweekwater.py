@@ -16,6 +16,7 @@ class PageItem(Item):
     imageCaption = Field()
     effectiveDate = Field()
     orig_url = Field()
+    id_url = Field()
     lang_urls = Field()
     is_container = Field()
     video_url = Field()
@@ -68,6 +69,7 @@ class PageItemExtractorMixin(object):
 #            raise Exception("No idea how to parse")
 
         item['orig_url'] = response.url
+        item['id_url'] = q('#footer a[rel="nofollow"]').attr('href')
         item['lang_urls'] = {}
 
         if not item['title']:

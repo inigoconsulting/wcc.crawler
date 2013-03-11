@@ -11,6 +11,8 @@ class GalleryItem(Item):
     bodytext = Field()
     images = Field()
     lang_urls = Field()
+    orig_url = Field()
+    id_url = Field()
 
 class ImageItem(Item):
     caption = Field()
@@ -34,6 +36,8 @@ class GalleryExtractorMixin(object):
             lambda x: self.parse_textpic_image(this, images)
         )
 
+        item['orig_url'] = response.url
+        item['id_url'] = q('#footer a[rel="nofollow"]').attr('href')
         item['lang_urls'] = {}
 
         def _extract_langurl(x):
