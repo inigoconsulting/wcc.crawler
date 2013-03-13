@@ -4,6 +4,7 @@ from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from pyquery import PyQuery
 import urllib
 from base64 import b64encode
+import dateutil.parser
 
 class NewsItem(Item):
     name = Field()
@@ -23,7 +24,10 @@ class NewsItemExtractorMixin(object):
         q = PyQuery(response.body)
         item = NewsItem()
         item['title'] = q('#news h1').text()
-        item['effectiveDate'] = q('#news .date').text()
+        edate = q('#news .date').text()
+        d,m,y = edate.split('.')
+        effectiveDate = dateutil.parser.parse('20%s-%s-%s' % (y,m,d))
+        item['effectiveDate'] = effectiveDate.isoformat()
         image_loader_url = q('#news .img a').attr('href')
         if image_loader_url:
             qi = PyQuery(urllib.urlopen(
