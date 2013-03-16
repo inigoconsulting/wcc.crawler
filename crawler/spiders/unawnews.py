@@ -47,6 +47,7 @@ class NewsItemExtractorMixin(object):
         bodytext.remove('.news-single-backlink')
         bodytext.remove('.news_footer')
         bodytext.remove('.more_link')
+        bodytext.remove('.news-single-timedata')
 
         # cleanup html and set bodytext
         bodytext.find("*[class]").each(lambda x: PyQuery(this).attr('class',''))
