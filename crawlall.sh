@@ -2,8 +2,8 @@ BUILDOUTROOT=`pwd`
 SCRAPY=$BUILDOUTROOT/bin/scrapy
 #MODULES="ewnnewsletter ewnsevenweekwater ewngallery ewnnews"
 #MODULES='piefnewsletter piefalerts'
-MODULES="wccnews"
-LANGS="en de fr es"
+MODULES="wccfeaturenews"
+LANGS="en de fr es pt"
 CRAWLERS=""
 for MOD in $MODULES;do
     for LANG in $LANGS;do
