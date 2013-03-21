@@ -5,6 +5,7 @@ from pyquery import PyQuery
 from pprint import pprint
 import logging
 import os
+from base64 import b64encode
 
 def _get_clean_node_html(node):
     node.find("*[class]").each(
@@ -170,7 +171,7 @@ class Scraper(object):
             if '.pdf' in url:
                 name, data = _download_file(url)
                 fileentry = {
-                    'data': data,
+                    'data': b64encode(data),
                     'name': name
                 }
                 entry['files'].append(fileentry)
