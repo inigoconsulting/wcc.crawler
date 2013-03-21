@@ -3,7 +3,8 @@ import json
 from datetime import datetime
 from pyquery import PyQuery
 from pprint import pprint
-
+import logging
+import os
 
 def _get_clean_node_html(node):
     node.find("*[class]").each(
@@ -18,6 +19,14 @@ def _find_raw_node_html(node):
             result['data'] = PyQuery(this)
     node.each(func)
     return result['data']
+
+
+def _download_file(url):
+    name = os.path.basename(url)
+    downurl = 'http://www.oikoumene.org/' + url
+    print "Downloading file %s" % downurl
+    data = urllib2.urlopen(downurl).read()
+    return name, data
 
 class Scraper(object):
 
@@ -44,6 +53,7 @@ class Scraper(object):
     def scrape(self):
         req = urllib2.Request(self.url, json.dumps(self.postdata),
                 {'Content-Type':'application/json'})
+        print "Loading Data"
         out = urllib2.urlopen(req).read()
         result = json.loads(out)
         self.result = result['result']['rows']
@@ -52,13 +62,26 @@ class Scraper(object):
         items = []
         skipped = []
         for row in self.result:
+
+            skipthis = False
+            for p in ['en/resources/documents', 'de/dokumentation/documents',
+                                        'fr/documentation/documents',
+                                        'es/documentacion/documents']:
+                if p in row['docPageURL']:
+                    break
+
+                skipthis = True
+
+            if skipthis:
+                continue
+
             if not (row['docPageURL'] or row['docPageURL'].strip()):
                 skipped.append(row)
                 continue
             print "Processing %s : %s" % (row['title'], row['docPageURL'])
             try: 
                 item = self.parse(row)
-            except urllib2.HTTPError:
+            except urllib2.HTTPError, urllib2.URLError:
                 skipped.append(row)
                 continue
             items.append(item) if item else None
@@ -76,7 +99,7 @@ class Scraper(object):
         entry['owner'] = data['owner'].encode('utf-8')
         entry['document_type'] = data['type'].encode('utf-8')
         entrydate = datetime.fromtimestamp(int(data['date']))
-        entry['date'] = entrydate.strftime('%Y-%m-%d %T')
+        entry['effectiveDate'] = entrydate.isoformat()
         entry['orig_url'] = data['docPageURL']
         entry['status'] = data['status']
         related_links = []
@@ -90,8 +113,28 @@ class Scraper(object):
         entry['is_container'] = False
         # extract body
 
-        q = PyQuery(urllib2.urlopen(entry['orig_url']).read())
+        q = None
+        retrycount = 0
+
+        if 'oikoumene.org' not in entry['orig_url']:
+            # skip stuff not in oikoumene.org
+            return None
+
+        while not q and retrycount < 10:
+            try:
+                print "Fetching %s" % entry['orig_url']
+                q = PyQuery(urllib2.urlopen(entry['orig_url']).read())
+            except Exception, e:
+                retrycount += 1
+                if retrycount >= 10:
+                    raise e
+                print "Failed to load %s, retrying" % entry['orig_url']
+
+
+
         bodytext = q('.csc-text')
+
+        entry['bodytext'] = ''
         if q('.csc-sitemap').html():
             entry['is_container'] = True
         if bodytext.html():
@@ -100,6 +143,40 @@ class Scraper(object):
             default = _find_raw_node_html(q('.csc-default'))
             if default:
                 entry['bodytext'] = _get_clean_node_html(default)
+
+        entry['lang_urls'] = {}
+
+        def _extract_langurl(x):
+            ql = PyQuery(this)
+            lang = ql.attr('lang')
+            entry['lang_urls'][lang] = 'http://www.oikoumene.org/%s' % ql.attr('href')
+
+        q('#languages a.lang').each(_extract_langurl)
+
+
+        def _extract_id_url(x):
+            url = PyQuery(this).attr('href')
+            if 'id=' in url:
+                entry['id_url'] = url
+
+        q('#footer a').each(_extract_id_url)
+
+        entry['files'] = []
+
+        def _extract_document(x):
+            url = PyQuery(this).attr('href')
+            if not url:
+                return
+            if '.pdf' in url:
+                name, data = _download_file(url)
+                fileentry = {
+                    'data': data,
+                    'name': name
+                }
+                entry['files'].append(fileentry)
+
+        q('.csc-text a').each(_extract_document)
+
         return entry
 
 if __name__=='__main__':
@@ -108,4 +185,4 @@ if __name__=='__main__':
     result = scraper.process()
     jsonout = json.dumps(result)
     open('docs-en.json','w').write(jsonout)
-    open('docs-en-skipped.json','w').write(scraper.skipped)
+    open('docs-en-skipped.json','w').write(json.dumps(scraper.skipped))
