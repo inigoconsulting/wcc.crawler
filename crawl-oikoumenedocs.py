@@ -11,7 +11,14 @@ def _get_clean_node_html(node):
     node.find("*[class]").each(
         lambda x: PyQuery(this).attr('class','') if (
         PyQuery(this).attr('class')) else None)
-    return node.html().replace(u'<p>\xa0</p>',u'')
+
+    result = []
+    def _extract_value(x):
+        value = PyQuery(this).html().replace(u'<p>\xa0</p>',u'')
+        result.append(value)
+
+    node.each(_extract_value)
+    return ''.join(result)
 
 def _find_raw_node_html(node):
     result = {'data': None}
@@ -21,13 +28,23 @@ def _find_raw_node_html(node):
     node.each(func)
     return result['data']
 
+def _write(data):
+    if not isinstance(data, str):
+        result = json.dumps(data)
+        if not os.path.exists('docs-en.json'):
+            result = '[\n' + result
+        else:
+            result = ',\n' + result
+    else:
+        result = data
+    open('docs-en.json','a').write(result)
 
 def _download_file(url):
     name = os.path.basename(url)
     downurl = 'http://www.oikoumene.org/' + url
     print "Downloading file %s" % downurl
     data = urllib2.urlopen(downurl).read()
-    return name, data
+    return name, b64encode(data)
 
 class Scraper(object):
 
@@ -65,9 +82,10 @@ class Scraper(object):
         for row in self.result:
 
             skipthis = False
-            for p in ['en/resources/documents', 'de/dokumentation/documents',
-                                        'fr/documentation/documents',
-                                        'es/documentacion/documents']:
+            for p in ['en/resources/documents', 
+                      'de/dokumentation/documents',
+                      'fr/documentation/documents',
+                      'es/documentacion/documents']:
                 if p in row['docPageURL']:
                     break
 
@@ -85,7 +103,9 @@ class Scraper(object):
             except urllib2.HTTPError, urllib2.URLError:
                 skipped.append(row)
                 continue
-            items.append(item) if item else None
+#            items.append(item) if item else None
+            _write(item)
+        _write('\n]')
         self.skipped = skipped
         return items
 
@@ -162,28 +182,33 @@ class Scraper(object):
 
         q('#footer a').each(_extract_id_url)
 
-        entry['files'] = []
+        files = []
 
         def _extract_document(x):
             url = PyQuery(this).attr('href')
             if not url:
                 return
             if '.pdf' in url:
-                name, data = _download_file(url)
-                fileentry = {
-                    'data': b64encode(data),
-                    'name': name
-                }
-                entry['files'].append(fileentry)
+                files.append(url)
 
         q('.csc-text a').each(_extract_document)
 
+        if len(files) == 1:
+            name, data = _download_file(files[0])
+            entry['file'] = {
+                'data': data,
+                'name': name
+            }
+        else:
+            entry['file'] = None
         return entry
 
 if __name__=='__main__':
+    if os.path.exists('docs-en.json'):
+        os.unlink('docs-en.json')
+
     scraper = Scraper()
     scraper.scrape()
     result = scraper.process()
-    jsonout = json.dumps(result)
-    open('docs-en.json','w').write(jsonout)
+#    jsonout = json.dumps(result)
     open('docs-en-skipped.json','w').write(json.dumps(scraper.skipped))
