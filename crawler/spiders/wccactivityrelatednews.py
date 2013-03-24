@@ -159,3 +159,29 @@ class FRSpider(CrawlSpider, ItemExtractorMixin):
             '^.*?/news-management/.*\.html',
         ), process_value=clean_url), callback='parse_item', follow=False),
     )
+
+class ESSpider(CrawlSpider, ItemExtractorMixin):
+
+    name = 'wccactivityrelatednews-es'
+    allowed_domains = ['www.oikoumene.org']
+    
+    def __init__(self, *args, **kwargs):
+        dirname = os.path.dirname(__file__)
+        data = json.loads(open(
+            os.path.join(dirname, '..', '..', 'wccactivity-es.json')).read())
+
+        self.start_urls = [
+            'http://www.oikoumene.org/%s' % i['news_category_url'] for i in data
+        ]
+
+        print '\n'.join(self.start_urls)
+
+        super(ESSpider, self).__init__(*args, **kwargs)
+
+
+    rules = (
+        Rule(SgmlLinkExtractor(allow=('^.*/browse/.*\.html',))),
+        Rule(SgmlLinkExtractor(allow=(
+            '^.*?/news-management/.*\.html',
+        ), process_value=clean_url), callback='parse_item', follow=False),
+    )

@@ -4,8 +4,8 @@ SCRAPY=$BUILDOUTROOT/bin/scrapy
 #MODULES='piefnewsletter piefalerts'
 #MODULES="wccfeaturenews"
 #LANGS="en de fr es pt"
-MODULES="wccactivityrelatednews"
-LANGS="fr"
+MODULES="wccactivity wccactivityrelatednews"
+LANGS="es"
 CRAWLERS=""
 for MOD in $MODULES;do
     for LANG in $LANGS;do
