@@ -39,8 +39,8 @@ class Processor(object):
                 entry['categories'].append(self._by_category[c]['id_url'])
         return result
 proc = Processor(
-    json.loads(open('wccactivity-de.json').read()), 
-    json.loads(open('wccactivityrelatednews-de.json').read())
+    json.loads(open('wccactivity-fr.json').read()), 
+    json.loads(open('wccactivityrelatednews-fr.json').read())
 )
 
 result = proc.run_mapper().values()

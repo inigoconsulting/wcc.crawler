@@ -149,3 +149,18 @@ class DESpider(CrawlSpider, ItemExtractorMixin):
             '^.*?/de/programme/.*\.html',
         ), process_value=clean_url), callback='parse_item', follow=True),
     )
+
+class FRSpider(CrawlSpider, ItemExtractorMixin):
+
+    name = 'wccactivity-fr'
+    allowed_domains = ['www.oikoumene.org']
+    start_urls = ['http://www.oikoumene.org/fr/programmes.html']
+
+    _category_url = re.compile('.*fr/nouvelles/nouvelles.html.*')
+    _document_folder_url = re.compile('.*documentation.*')
+
+    rules = (
+        Rule(SgmlLinkExtractor(allow=(
+            '^.*?fr/programmes/.*\.html',
+        ), process_value=clean_url), callback='parse_item', follow=True),
+    )
