@@ -5,7 +5,7 @@ SCRAPY=$BUILDOUTROOT/bin/scrapy
 #MODULES="wccfeaturenews"
 #LANGS="en de fr es pt"
 MODULES="wccactivityrelatednews"
-LANGS="en"
+LANGS="de"
 CRAWLERS=""
 for MOD in $MODULES;do
     for LANG in $LANGS;do

@@ -8,6 +8,7 @@ import dateutil.parser
 
 import urlparse
 import urllib
+import re
 
 
 def _get_clean_node_html(node):
@@ -54,9 +55,10 @@ class Item(Item):
     lang_urls = Field()
     news_category_url = Field()
     category_id = Field()
-    related_documents_urls = Field()
+    document_folder_url = Field()
 
 class ItemExtractorMixin(object):
+
 
     def _parse_date(self, datestr):
         d,m,y = datestr.split('.')
@@ -96,12 +98,10 @@ class ItemExtractorMixin(object):
 
         def _extract_newscategory_url(x):
             url = PyQuery(this).attr('href')
-            if 'en/news/news-on-selected-category.html' in url:
+            if self._category_url.match(url):
                 item['news_category_url'] = url
 
         q('#activity_news a').each(_extract_newscategory_url)
-
-        item['related_documents_urls'] = []
 
         qs = urlparse.parse_qs(
             urlparse.urlparse(response.url).query
@@ -111,12 +111,12 @@ class ItemExtractorMixin(object):
                 ',')[0] if (
                 qs.has_key('tx_ttnews[cat]') ) else None
 
-        def _extract_document_urls(x):
+        def _extract_document__folder_url(x):
             url = PyQuery(this).attr('href')
-            if 'documents' in url:
-                item['related_documents_urls'].append(url)
+            if self._document_folder_url.match(url):
+                item['document_folder_url'] = url
 
-        q('#documents_list a').each(_extract_document_urls)
+        q('.link_more a').each(_extract_document__folder_url)
         return item
 
 
@@ -126,8 +126,26 @@ class ENSpider(CrawlSpider, ItemExtractorMixin):
     allowed_domains = ['www.oikoumene.org']
     start_urls = ['http://www.oikoumene.org/en/programmes/']
 
+    _category_url = re.compile('.*en/news/news-on-selected-category.html.*')
+    _document_folder_url = re.compile('.*document.*')
+
     rules = (
         Rule(SgmlLinkExtractor(allow=(
             '^.*?/en/programmes/.*\.html',
+        ), process_value=clean_url), callback='parse_item', follow=True),
+    )
+
+class DESpider(CrawlSpider, ItemExtractorMixin):
+
+    name = 'wccactivity-de'
+    allowed_domains = ['www.oikoumene.org']
+    start_urls = ['http://www.oikoumene.org/de/programme.html']
+
+    _category_url = re.compile('.*de/nachrichten/nachrichten.html.*')
+    _document_folder_url = re.compile('.*dokumentation.*')
+
+    rules = (
+        Rule(SgmlLinkExtractor(allow=(
+            '^.*?/de/programme/.*\.html',
         ), process_value=clean_url), callback='parse_item', follow=True),
     )
