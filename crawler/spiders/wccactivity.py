@@ -46,6 +46,7 @@ class Item(Item):
     name = Field()
     title = Field()
     description = Field()
+    keywords = Field()
     bodytext = Field()
     image = Field()
     imageCaption = Field()
@@ -56,6 +57,7 @@ class Item(Item):
     news_category_url = Field()
     category_id = Field()
     document_folder_url = Field()
+    related_document_urls = Field()
 
 class ItemExtractorMixin(object):
 
@@ -76,7 +78,10 @@ class ItemExtractorMixin(object):
         item = Item()
         item['title'] = q('title').text()
         item['bodytext'] = _get_clean_node_html(q('#activity_description'))
-        item['description'] = ''
+        item['description'] = (
+                q('meta[name="description"]').attr('content') or '')
+        item['keywords'] = q('meta[name="keywords"]').attr('content') or ''
+        item['keywords'] = item['keywords'].split(',')
         item['orig_url'] = response.url
         item['lang_urls'] = {}
 
@@ -111,12 +116,20 @@ class ItemExtractorMixin(object):
                 ',')[0] if (
                 qs.has_key('tx_ttnews[cat]') ) else None
 
-        def _extract_document__folder_url(x):
+        def _extract_document_folder_url(x):
             url = PyQuery(this).attr('href')
             if self._document_folder_url.match(url):
                 item['document_folder_url'] = url
 
-        q('.link_more a').each(_extract_document__folder_url)
+        q('.link_more a').each(_extract_document_folder_url)
+
+        item['related_document_urls' ] = []
+        def _extract_related_document_urls(x):
+            url = PyQuery(this).attr('href')
+            if self._related_documents_url.match(url):
+                item['related_document_urls'].append(url)
+
+        q('.table_l_col .documents_list a').each(_extract_related_document_urls)
         return item
 
 
@@ -128,6 +141,7 @@ class ENSpider(CrawlSpider, ItemExtractorMixin):
 
     _category_url = re.compile('.*en/news/news-on-selected-category.html.*')
     _document_folder_url = re.compile('.*document.*')
+    _related_documents_url = _document_folder_url
 
     rules = (
         Rule(SgmlLinkExtractor(allow=(
@@ -143,6 +157,7 @@ class DESpider(CrawlSpider, ItemExtractorMixin):
 
     _category_url = re.compile('.*de/nachrichten/nachrichten.html.*')
     _document_folder_url = re.compile('.*dokumentation.*')
+    _related_documents_url = _document_folder_url
 
     rules = (
         Rule(SgmlLinkExtractor(allow=(
@@ -158,6 +173,7 @@ class FRSpider(CrawlSpider, ItemExtractorMixin):
 
     _category_url = re.compile('.*fr/nouvelles/nouvelles.html.*')
     _document_folder_url = re.compile('.*documentation.*')
+    _related_documents_url = _document_folder_url
 
     rules = (
         Rule(SgmlLinkExtractor(allow=(
@@ -173,6 +189,7 @@ class ESSpider(CrawlSpider, ItemExtractorMixin):
 
     _category_url = re.compile('.*es/novedades/novedades.html.*')
     _document_folder_url = re.compile('.*documentacion.*')
+    _related_documents_url = _document_folder_url
 
     rules = (
         Rule(SgmlLinkExtractor(allow=(
